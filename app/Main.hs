@@ -32,7 +32,7 @@ eval = \case
 
 parsedProgram :: Expr TypesP
 parsedProgram = either (error . show) id $ unsafePerformIO do
-  parseExpr "(λ bind .  bind (λ a . λ b . a) (λ true . λ guard . a b c d )) (λ v . λ f . f v)"
+  parseExpr $ encodeUtf8 @Text "(λ bind .  bind (λ a . λ b . a) (λ true . λ guard . a b c d )) (λ v . λ f . f v)"
 
 main :: IO ()
 main = do

@@ -6,26 +6,27 @@ import StringBuffer
 import SrcLoc
 import Monad.Parser
 import Token
+import Data.ByteString.Internal qualified as BS
 
 }
-%encoding "latin1"
+%encoding "utf8"
 
 $whitechar   = [\ \t\n\r\f\v\xa0] -- \xa0 is Unicode no-break space
 $white_no_nl = $whitechar # \n
 
 $ascdigit  = 0-9
-$unidigit  = \x01 -- Trick Alex into handling Unicode. See alexGetChar.
-$digit     = [$ascdigit $unidigit]
+-- $unidigit  = \x01 -- Trick Alex into handling Unicode. See alexGetChar.
+$digit     = [$ascdigit ] --$unidigit
 $octit     = 0-7
 $hexit     = [$digit A-F a-f]
 
-$unilarge  = \x03 -- Trick Alex into handling Unicode. See alexGetChar.
+-- $unilarge  = \x03 -- Trick Alex into handling Unicode. See alexGetChar.
 $asclarge  = [A-Z \xc0-\xd6 \xd8-\xde]
-$large     = [$asclarge $unilarge]
+$large     = [$asclarge ] --$unilarge
 
-$unismall  = \x04 -- Trick Alex into handling Unicode. See alexGetChar.
+-- $unismall  = \x04 -- Trick Alex into handling Unicode. See alexGetChar.
 $ascsmall  = [a-z \xdf-\xf6 \xf8-\xff]
-$small     = [$ascsmall $unismall \_]
+$small     = [$ascsmall  \_] --$unismall
 
 $namebegin = [$large $small]
 $namechar  = [$namebegin $digit]
@@ -85,18 +86,14 @@ allTokensWithFuel n = lexToken >>= \case
 type AlexInput = ParserState
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar st = getPrevChar st.buffer '\n'
-
--- backwards compatibility for Alex 2.x
-alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-alexGetChar st
-  | atEnd st.buffer  = Nothing
-  | otherwise = Just (ch, st & #buffer .~ sb & #location .~ loc) where
-    (!ch, !sb) = getNextChar st.buffer
-    !loc = advanceSrcLoc st.location ch
+alexInputPrevChar = error "We don't want to support backtraking"
 
 alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte st = alexGetChar st & _Just . _1 %~ (fromIntegral . ord)
+alexGetByte st
+  | atEnd st.buffer = Nothing
+  | otherwise = Just (b, st & #buffer .~ sb & #location .~ loc) where
+    (!b, !sb) = getNextByte st.buffer
+    !loc = advanceSrcLoc st.location (BS.w2c b)
 
 getInput :: P AlexInput
 getInput = get

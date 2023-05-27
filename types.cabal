@@ -115,8 +115,8 @@ common dependensies
     , universum
 
   mixins:
-    base (Prelude as Base.Prelude)
-    , base hiding (Prelude)
+    base (Prelude as Base.Prelude),
+    base hiding (Prelude)
 
 library
   import:             warnings, extensions, dependensies

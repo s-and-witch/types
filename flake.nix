@@ -17,6 +17,19 @@
 
         haskellPackages = pkgs.haskell.packages.ghc944;
 
+        cabal-install-wrapper = pkgs.writeScriptBin "cabal"
+          ''
+          #!${pkgs.bash}/bin/bash
+          ${pkgs.haskellPackages.cabal-fmt}/bin/cabal-fmt -i *.cabal
+          ${pkgs.cabal-install}/bin/cabal $@
+          '';
+
+        hls-wrapper = pkgs.writeScriptBin "haskell-language-server"
+          ''
+          #!${pkgs.bash}/bin/bash
+          PATH=${pkgs.cabal-install}/bin:$PATH ${haskellPackages.haskell-language-server}/bin/haskell-language-server $@
+          '';
+
         jailbreakUnbreak = pkg:
           pkgs.haskell.lib.doJailbreak (pkg.overrideAttrs (_: { meta = { }; }));
 
@@ -31,16 +44,12 @@
         defaultPackage = self.packages.${system}.default;
 
         devShells.default = pkgs.mkShell {
-          shellHook =
-            ''
-            alias cabal="cabal-fmt -i *.cabal; cabal"
-            alias :r="cabal run"
-            '';
-
           buildInputs = with pkgs; [
-            haskellPackages.haskell-language-server # you must build it with your ghc to work
+            hls-wrapper
+            # haskellPackages.haskell-language-server
             ghcid
-            cabal-install
+            cabal-install-wrapper
+            # cabal-install
             haskellPackages.cabal-fmt
             haskellPackages.alex
             haskellPackages.happy
